@@ -2,40 +2,44 @@ import java.util.*;
 
 class Solution {
     public int minMoves(String[] a, int e) {
-        int m=a.length,n=a[0].length(),sr=0,sc=0,k=0;
+        int m=a.length,n=a[0].length(),s=0,k=0;
         int[][] id=new int[m][n];
         for(int[] x:id) Arrays.fill(x,-1);
 
-        for(int i=0;i<m;i++) for(int j=0;j<n;j++) {
-            char c=a[i].charAt(j);
-            if(c=='S'){sr=i;sc=j;}
-            if(c=='L') id[i][j]=k++;
+        for(int i=0;i<m;i++) for(int j=0;j<n;j++){
+            if(a[i].charAt(j)=='S') s=i*n+j;
+            if(a[i].charAt(j)=='L') id[i][j]=k++;
         }
 
-        int[][][] v=new int[m][n][1<<k];
-        for(int[][] x:v) for(int[] y:x) Arrays.fill(y,-1);
+        int full=(1<<k)-1,c=m*n;
+        int[][] best=new int[1<<k][c];
+        for(int[] x:best) Arrays.fill(x,-1);
 
         Queue<int[]> q=new ArrayDeque<>();
-        q.add(new int[]{sr,sc,0,e});
-        v[sr][sc][0]=e;
+        q.add(new int[]{s,0,e});
+        best[0][s]=e;
 
         int[][] d={{1,0},{-1,0},{0,1},{0,-1}};
+
         for(int ans=0;!q.isEmpty();ans++) for(int z=q.size();z>0;z--){
-            int[] s=q.poll();
-            if(s[2]==(1<<k)-1) return ans;
-            if(s[3]==0) continue;
+            int[] x=q.poll();
+            int p=x[0],mask=x[1],pow=x[2];
 
-            for(int[] x:d){
-                int r=s[0]+x[0],c=s[1]+x[1];
-                if(r<0||r>=m||c<0||c>=n||a[r].charAt(c)=='X') continue;
+            if(mask==full) return ans;
+            if(pow==0 || pow<best[mask][p]) continue;
 
-                int en=s[3]-1,mask=s[2];
-                if(a[r].charAt(c)=='R') en=e;
-                if(a[r].charAt(c)=='L') mask|=1<<id[r][c];
+            int r=p/n,c1=p%n;
 
-                if(v[r][c][mask]<en){
-                    v[r][c][mask]=en;
-                    q.add(new int[]{r,c,mask,en});
+            for(int[] d1:d){
+                int nr=r+d1[0],nc=c1+d1[1];
+                if(nr<0||nr>=m||nc<0||nc>=n||a[nr].charAt(nc)=='X') continue;
+
+                int np=nr*n+nc, nm=mask|(id[nr][nc]>=0?1<<id[nr][nc]:0);
+                int ne=a[nr].charAt(nc)=='R'?e:pow-1;
+
+                if(ne>best[nm][np]){
+                    best[nm][np]=ne;
+                    q.add(new int[]{np,nm,ne});
                 }
             }
         }
