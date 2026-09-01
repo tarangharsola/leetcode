@@ -1,57 +1,43 @@
+import java.util.*;
+
 class Solution {
-    public int minMoves(String[] classroom, int energy) {
-        int m = classroom.length, n = classroom[0].length();
-        int[][] d = new int[m][n];
-        int x = 0, y = 0, cnt = 0;
-        for (int i = 0; i < m; i++) {
-            String row = classroom[i];
-            for (int j = 0; j < n; j++) {
-                char c = row.charAt(j);
-                if (c == 'S') {
-                    x = i;
-                    y = j;
-                } else if (c == 'L') {
-                    d[i][j] = cnt;
-                    cnt++;
+    public int minMoves(String[] a, int e) {
+        int m=a.length,n=a[0].length(),sr=0,sc=0,k=0;
+        int[][] id=new int[m][n];
+        for(int[] x:id) Arrays.fill(x,-1);
+
+        for(int i=0;i<m;i++) for(int j=0;j<n;j++) {
+            char c=a[i].charAt(j);
+            if(c=='S'){sr=i;sc=j;}
+            if(c=='L') id[i][j]=k++;
+        }
+
+        int[][][] v=new int[m][n][1<<k];
+        for(int[][] x:v) for(int[] y:x) Arrays.fill(y,-1);
+
+        Queue<int[]> q=new ArrayDeque<>();
+        q.add(new int[]{sr,sc,0,e});
+        v[sr][sc][0]=e;
+
+        int[][] d={{1,0},{-1,0},{0,1},{0,-1}};
+        for(int ans=0;!q.isEmpty();ans++) for(int z=q.size();z>0;z--){
+            int[] s=q.poll();
+            if(s[2]==(1<<k)-1) return ans;
+            if(s[3]==0) continue;
+
+            for(int[] x:d){
+                int r=s[0]+x[0],c=s[1]+x[1];
+                if(r<0||r>=m||c<0||c>=n||a[r].charAt(c)=='X') continue;
+
+                int en=s[3]-1,mask=s[2];
+                if(a[r].charAt(c)=='R') en=e;
+                if(a[r].charAt(c)=='L') mask|=1<<id[r][c];
+
+                if(v[r][c][mask]<en){
+                    v[r][c][mask]=en;
+                    q.add(new int[]{r,c,mask,en});
                 }
             }
-        }
-        if (cnt == 0) {
-            return 0;
-        }
-        boolean[][][][] vis = new boolean[m][n][energy + 1][1 << cnt];
-        List<int[]> q = new ArrayList<>();
-        q.add(new int[] {x, y, energy, (1 << cnt) - 1});
-        vis[x][y][energy][(1 << cnt) - 1] = true;
-        int[] dirs = {-1, 0, 1, 0, -1};
-        int ans = 0;
-        while (!q.isEmpty()) {
-            List<int[]> t = q;
-            q = new ArrayList<>();
-            for (int[] state : t) {
-                int i = state[0], j = state[1], curEnergy = state[2], mask = state[3];
-                if (mask == 0) {
-                    return ans;
-                }
-                if (curEnergy <= 0) {
-                    continue;
-                }
-                for (int k = 0; k < 4; k++) {
-                    int nx = i + dirs[k], ny = j + dirs[k + 1];
-                    if (nx >= 0 && nx < m && ny >= 0 && ny < n && classroom[nx].charAt(ny) != 'X') {
-                        int nxtEnergy = classroom[nx].charAt(ny) == 'R' ? energy : curEnergy - 1;
-                        int nxtMask = mask;
-                        if (classroom[nx].charAt(ny) == 'L') {
-                            nxtMask &= ~(1 << d[nx][ny]);
-                        }
-                        if (!vis[nx][ny][nxtEnergy][nxtMask]) {
-                            vis[nx][ny][nxtEnergy][nxtMask] = true;
-                            q.add(new int[] {nx, ny, nxtEnergy, nxtMask});
-                        }
-                    }
-                }
-            }
-            ans++;
         }
         return -1;
     }
